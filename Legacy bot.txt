@@ -1,0 +1,146 @@
+-- Services
+local Players = game:GetService("Players")
+local PathfindingService = game:GetService("PathfindingService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+-- Variables
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+local path = nil -- Holds the current path object
+local keyFound = false -- Flag for detecting if key was found
+
+-- Utility: Log Messages
+local function logMessage(message, color)
+    print(message) -- Log to the console
+    game.StarterGui:SetCore("ChatMakeSystemMessage", {Text = message; Color = color or Color3.new(1, 1, 1)})
+end
+
+-- Function: Visualize Target Position
+local function visualizeTarget(position)
+    local highlight = Instance.new("Part")
+    highlight.Size = Vector3.new(1, 1, 1)
+    highlight.Color = Color3.new(1, 0, 0)
+    highlight.Material = Enum.Material.Neon
+    highlight.Anchored = true
+    highlight.CanCollide = false
+    highlight.Position = position
+    highlight.Parent = workspace
+    game.Debris:AddItem(highlight, 5) -- Remove after 5 seconds
+end
+
+-- Function: Crouch Mechanism
+local function crouch()
+    humanoid.WalkSpeed = 8
+    logMessage("Crouching...", Color3.fromRGB(255, 255, 0))
+    -- You can add animations for crouching here
+end
+
+-- Function: Stand Up
+local function standUp()
+    humanoid.WalkSpeed = 16
+    logMessage("Standing up...", Color3.fromRGB(0, 255, 0))
+end
+
+-- Function: Find the Key Object
+local function findKey()
+    logMessage("Searching for the key...", Color3.fromRGB(0, 255, 255))
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") or obj:IsA("Model") or obj:IsA("Tool") then
+            if obj.Name:lower():find("key") then
+                logMessage("Key found! Moving to key...", Color3.fromRGB(0, 255, 0))
+                keyFound = true
+                if obj:IsA("Tool") then
+                    return obj.Handle
+                elseif obj:IsA("Model") then
+                    return obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                else
+                    return obj
+                end
+            end
+        end
+    end
+    logMessage("Key not found in the room.", Color3.fromRGB(255, 0, 0))
+    return nil
+end
+
+-- Function: Move to Target Position
+local function moveToPosition(targetPosition)
+    if not targetPosition then
+        logMessage("No target position provided.", Color3.fromRGB(255, 0, 0))
+        return
+    end
+
+    -- Create a path to the target
+    path = PathfindingService:CreatePath({
+        AgentRadius = 2,
+        AgentHeight = 5,
+        AgentCanJump = true,
+        AgentJumpHeight = 7,
+        AgentMaxSlope = 45
+    })
+
+    path:ComputeAsync(rootPart.Position, targetPosition)
+
+    if path.Status == Enum.PathStatus.Success then
+        logMessage("Path found! Moving to target...", Color3.fromRGB(0, 255, 255))
+        local waypoints = path:GetWaypoints()
+
+        -- Visualize path
+        for _, waypoint in ipairs(waypoints) do
+            visualizeTarget(waypoint.Position)
+        end
+
+        -- Move through waypoints
+        for _, waypoint in ipairs(waypoints) do
+            humanoid:MoveTo(waypoint.Position)
+            humanoid.MoveToFinished:Wait()
+
+            -- Simulate crouch where necessary
+            if waypoint.Action == Enum.PathWaypointAction.Jump then
+                crouch()
+                wait(0.5)
+                standUp()
+            end
+        end
+        logMessage("Reached the target!", Color3.fromRGB(0, 255, 0))
+    else
+        logMessage("Failed to find path. Retrying...", Color3.fromRGB(255, 0, 0))
+        wait(1)
+        moveToPosition(targetPosition) -- Retry
+    end
+end
+
+-- Enemy Detection
+local function detectEnemies()
+    for _, enemy in ipairs(workspace:GetChildren()) do
+        if enemy:IsA("Model") and enemy:FindFirstChild("Humanoid") and enemy.Name:lower():find("enemy") then
+            local enemyPosition = enemy.PrimaryPart and enemy.PrimaryPart.Position or enemy:GetPivot().Position
+            logMessage("Enemy detected nearby! Avoiding...", Color3.fromRGB(255, 0, 0))
+            -- Move in a direction opposite the enemy
+            local runDirection = (rootPart.Position - enemyPosition).Unit * 20
+            moveToPosition(rootPart.Position + runDirection)
+        end
+    end
+end
+
+-- Main Execution
+local function main()
+    logMessage("AI Started. Searching for doors...", Color3.fromRGB(0, 255, 255))
+
+    local keyPart = findKey() -- Locate the key
+    if keyPart then
+        moveToPosition(keyPart.Position) -- Move to the key
+    else
+        logMessage("Key could not be found! Ensure it exists in the room.", Color3.fromRGB(255, 0, 0))
+    end
+
+    -- Continuously check for enemies
+    RunService.Heartbeat:Connect(detectEnemies)
+end
+
+-- Start the AI
+main()
