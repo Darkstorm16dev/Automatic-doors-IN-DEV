@@ -1,4 +1,4 @@
--- Roblox DOORS AI Script with Enemy Detection, Key Retrieval, and Smart Navigation
+-- Roblox DOORS AI Script with Enemy Detection, Key Retrieval, and Smart Navigation BUGGED WARNING NEED, CURRENTLY NEEDS FIXING
 
 -- Game ID Check
 local DOORS_GAME_ID = 6839171747
