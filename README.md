@@ -8,10 +8,10 @@ Hi, I'm Darkstorm16, a solo developer working on this project. One day, I though
 
 ## Features
 
-- **Enemy Detection**: The bot can detect enemies like Rush and Ambush using sound recognition.
+- **Enemy Detection**: in dev
 - **Pathfinding**: The bot uses Roblox's PathfindingService to navigate through the game environment.
 - **Key Finding**: The bot searches for keys in rooms to unlock doors.
-- **Closet Hiding**: The bot can hide in closets to avoid enemies.
+- **Closet Hiding**: in dev
 - **Logging System**: A UI-based logging system to visualize the bot's actions and states.
 - **Compatibility Check**: Ensures the script runs only in the "DOORS" game.
 
