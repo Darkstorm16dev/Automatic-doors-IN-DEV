@@ -32,11 +32,7 @@ To get started with this project, follow these steps:
     cd Automatic-doors-IN-DEV
     ```
 
-2. **Open in Roblox Studio**:
-    - Open Roblox Studio.
-    - Load the project files and scripts into your game.
-
-3. **Run the Script**:
+2. **Run the Script**:
     - Ensure you are in the "DOORS" game.
     - Inject the script and observe the bot's actions through the logging UI.
 
